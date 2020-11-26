@@ -39,9 +39,9 @@ int main() {
 
     printf("Weapons in inventory:\n");
 
-    for (int i = 0; i <= 5; i++) {
+    for (int i = 0; i < 5; i++) { // 1. runtime array out of bounds with i=5
         if (weapons[i]->in_inventory = true) {
-            printf("%f \n", weapons[i]->name);
+            printf("%s \n", weapons[i]->name); //4. compiler error, printf need char* datatype
         }
     }
 
