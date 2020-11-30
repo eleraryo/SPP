@@ -71,6 +71,7 @@ void SortedLinkedList_delete(SortedLinkedList* list){
     free(tmp_delete1);
     free(tmp_delete2);
     list->head=NULL;
+    free(list);
     printf("Deleted list\n");
 };
 
