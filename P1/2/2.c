@@ -3,24 +3,24 @@
 #include <stdlib.h>
 
 typedef struct weapon { // 1. Compiler error typedef added
-    char* name;
+    char*   name;
     int     range;
     float   damage;
     bool    in_inventory;
 } weapon;
 
-weapon* 
+weapon*
 create_weapon(
-    char* name,
+    char*   name,
     int     range,
     float   damage,
     bool    in_inventory
 ) {
     weapon* new_weapon=malloc(sizeof(weapon)); //2nd compiler error initialize variable by allocating space
     new_weapon -> name = name;
-    (*new_weapon).range = range; //3rd compiler error lines 21-23 use (* ). or ->
-    (*new_weapon).damage = damage;
-    (*new_weapon).in_inventory = in_inventory;
+    new_weapon -> range = range; //4-6th compiler error lines 21-23 use (* ). or ->
+    new_weapon -> damage = damage;
+    new_weapon -> in_inventory = in_inventory;
     return new_weapon;
 }
 
@@ -41,7 +41,7 @@ int main() {
 
     for (int i = 0; i < 5; i++) { // 1. runtime array out of bounds with i=5
         if (weapons[i]->in_inventory == true) { // 2. runtime error, compare and not is
-            printf("%s \n", weapons[i]->name); //4. compiler error, printf need char* datatype
+            printf("%s \n", weapons[i]->name); //3. compiler error, printf need char* datatype
         }
     }
 
