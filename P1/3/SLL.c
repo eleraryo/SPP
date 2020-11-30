@@ -8,75 +8,122 @@ typedef struct SortedLinkedListNode{
 }SortedLinkedListNode;
 
 typedef struct SortedLinkedList{
-    SortedLinkedListNode firstElement;
+    SortedLinkedListNode *head;
 }SortedLinkedList;
 
-
 SortedLinkedList* SortedLinkedList_create(){
-    struct SortedLinkedListNode *head = NULL;
-    SortedLinkedList sorted_list;
+    // eine leere liste soll hier erstellt werden
+    SortedLinkedList* sorted_list=malloc(sizeof(SortedLinkedList));
+    SortedLinkedListNode *head = NULL;
+    return sorted_list;
 };
+
+// void SortedLinkedList_addToList2(SortedLinkedList* list, int data){
+//     // compare size of data with list
+//     SortedLinkedListNode* new_element = malloc(sizeof(struct SortedLinkedListNode));
+//     (*new_element).data = data;
+//     (*new_element).next = NULL;
+    
+//     if (list->head == NULL){
+//         list->head = new_element;
+//     }else{
+//         while(data > )
+//     }
+//     // struct SortedLinkedListNode *tmp_add;
+//     // struct SortedLinkedListNode *add = (struct SortedLinkedListNode *) malloc(sizeof(struct SortedLinkedListNode));
+//     // tmp_add = head;
+//     // add->data=42;
+//     // add->next=NULL;
+//     // if (tmp_add->next==NULL)
+//     // {
+//     //     tmp_add->next=add;
+//     // }
+//     // else{
+//     // while (add->data >= tmp_add->data)
+//     // {
+//     //     tmp_add=tmp_add->next;
+//     // }
+//     // add->next=tmp_add->next;
+//     // tmp_add=add;}
+//     // printf("Add\n");
+//     /*
+    
+//     */
+// };
 
 void SortedLinkedList_addToList(SortedLinkedList* list, int data){
-    (*list).head = (struct SortedLinkedListNode *) malloc(sizeof(struct SortedLinkedListNode));
-    (*list).head->data;
-    (*list).head->next=NULL;
-};
-
-void SortedLinkedList_delete(SortedLLinkedList* list){
-    //SLL_delete(list)
-    /*
-    struct SortedLinkedListNode *temp_delete1 = NULL;
-    struct SortedLinkedListNode *temp_delete2 = NULL;
-    temp_delete1 = head;
-    while (temp_delete1 != NULL)
-    {
-        temp_delete2 = temp_delete1->next;
-        free(temp_delete1);
-        temp_delete1 = temp_delete2;
-    }
-    printf("delete\n");
-    */
-
-};
-
-SortedLinkedListNode* SortedLinkedList_getSmallest(SortedlinkedList* list){
-
-};
-
-int main(){
-    // create list
-    SortedLinkedList *list = SortedLinkedList_create();
-
-    // add element to list
-    SortedLinkedList_addToList(list, 90);
-
-    struct SortedLinkedListNode *temp_add;
+    struct SortedLinkedListNode *tmp_add;
     struct SortedLinkedListNode *add = (struct SortedLinkedListNode *) malloc(sizeof(struct SortedLinkedListNode));
-    temp_add=head;
-    add->data=42;
-    add->next=NULL;
-    if (temp_add->next==NULL)
-    {
-        temp_add->next=add;
+    tmp_add = list->head;
+    add->data = data;
+    add->next = NULL;
+    if (tmp_add->next == NULL){
+        tmp_add->next = add;
     }
     else{
-    while (add->data >= temp_add->data)
-    {
-        temp_add=temp_add->next;
+        while (add->data >= tmp_add->data){
+            tmp_add=tmp_add->next;
     }
-    add->next=temp_add->next;
-    temp_add=add;}
-    printf("Add\n");
+        add->next=tmp_add->next;
+        tmp_add=add;
+    }
+    printf("Added the element %d to the list\n", data);
+};
 
+void SortedLinkedList_delete(SortedLinkedList* list){
+    struct SortedLinkedListNode *tmp_delete1 = NULL;
+    struct SortedLinkedListNode *tmp_delete2 = NULL;
+    tmp_delete1 = list->head;
+    while (tmp_delete1 != NULL)
+    {
+        tmp_delete2 = tmp_delete1->next;
+        free(tmp_delete1);
+        tmp_delete1 = tmp_delete2;
+    }
+    printf("deleted list\n");
+};
 
-    //SLL_get(list)
-    if(head==NULL){
+SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* sorted_list){
+    //smallest element should be the first one as the list is sorted
+    SortedLinkedListNode *current = sorted_list->head;
+
+    if(current == NULL){
         printf("List Empty");
     }
     else{
-        printf("%d", head->data);
+        printf("%d", current->data);
     }
+
+};
+
+void print_list(SortedLinkedList* list){
+    auto current = list->head;
+    int j = 1;
+
+    while (current != NULL){
+        printf("The %d. element of the list is: %d", j, list->head->data);
+        j++;
+    }
+}
+
+int main(){
+    // create list
+    SortedLinkedList* sorted_list = SortedLinkedList_create();
+
+    // add element to list
+    SortedLinkedList_addToList(sorted_list, 90);
+    SortedLinkedList_addToList(sorted_list, 42);
+
+    print_list(sorted_list);
+
+    // get smallest element
+    SortedLinkedListNode* smallest =  SortedLinkedList_getSmallest(sorted_list);
+    printf("The smallest element is ", smallest->data);
+
+    // delete list
+    SortedLinkedList_delete(sorted_list);
+    
+    print_list(sorted_list);
 
     return 0;
 }
