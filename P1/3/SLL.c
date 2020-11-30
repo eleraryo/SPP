@@ -28,11 +28,9 @@ void SortedLinkedList_addToList(SortedLinkedList* list, int data){
     add->data = data;
     add->next = NULL;
     if (tmp_add1 == NULL){ //case 1: list empty
-        printf("NULL");
         list->head = add;
     }
     else{
-        printf("%d",tmp_add1->data);
         if (add->data <= tmp_add1->data)
         {
             add->next=tmp_add1;
@@ -41,15 +39,12 @@ void SortedLinkedList_addToList(SortedLinkedList* list, int data){
         else{
         while (add->data >= tmp_add1->data){//case 2: somewhere in the middle 
             if(tmp_add1->next==NULL){// case 4: element at the very end?
-            printf("break");
                break; 
             }
             //traverse list
-            printf("While");
             tmp_add2=tmp_add1;
             tmp_add1=tmp_add1->next;
     }
-        printf("Test");
         if (tmp_add1->next == NULL){//case 4 yup, at the very end
             tmp_add1->next = add;
         }
@@ -76,20 +71,19 @@ void SortedLinkedList_delete(SortedLinkedList* list){
     free(tmp_delete1);
     free(tmp_delete2);
     list->head=NULL;
-    printf("deleted list\n");
+    printf("Deleted list\n");
 };
 
 SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     //smallest element should be the first one as the list is sorted
     struct SortedLinkedListNode *current;
     current = list->head;
-    printf("%d\n",current);
     if(current == NULL){
         printf("List Empty");
         return NULL;
     }
     else{
-        printf("%d", current->data);
+        printf("The smallest element is %d", current->data);
         return current;
     }
 
@@ -120,7 +114,7 @@ int main(){
 
     // get smallest element
     SortedLinkedListNode* smallest =  SortedLinkedList_getSmallest(sorted_list);
-    //printf("The smallest element is ", smallest->data);
+    printf("The smallest element is %d", smallest->data);
 
     // delete list
     SortedLinkedList_delete(sorted_list);
