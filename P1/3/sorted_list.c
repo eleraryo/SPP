@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "SLL.h"
+#include "sorted_list.h"
 
 typedef struct SortedLinkedListNode{
     int data;
@@ -79,11 +79,11 @@ SortedLinkedListNode* SortedLinkedList_getSmallest(SortedLinkedList* list){
     struct SortedLinkedListNode *current;
     current = list->head;
     if(current == NULL){
-        printf("List Empty");
+        printf("List Empty\n");
         return NULL;
     }
     else{
-        printf("The smallest element is %d", current->data);
+        printf("The smallest element is %d\n", current->data);
         return current;
     }
 
@@ -103,26 +103,20 @@ void print_list(SortedLinkedList* list){
 int main(){
     // create list
     SortedLinkedList* sorted_list = SortedLinkedList_create();
-    printf("create");
     // add element to list
     SortedLinkedList_addToList(sorted_list, 90);
     SortedLinkedList_addToList(sorted_list, 142);
     SortedLinkedList_addToList(sorted_list, 200);
     SortedLinkedList_addToList(sorted_list, 4);
     SortedLinkedList_addToList(sorted_list, 23);
+    //print list
     print_list(sorted_list);
 
     // get smallest element
-    SortedLinkedListNode* smallest =  SortedLinkedList_getSmallest(sorted_list);
-    printf("The smallest element is %d", smallest->data);
+    SortedLinkedList_getSmallest(sorted_list);
 
     // delete list
     SortedLinkedList_delete(sorted_list);
-    printf("into the trash bin");
     
-    SortedLinkedList_getSmallest(sorted_list);
-    //print_list(sorted_list);
-    printf("whoops, its empty");
-
     return 0;
 }
