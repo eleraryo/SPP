@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct weapon { // 1. Compiler error typedef added
+typedef struct weapon { // 1. Compiler error typedef added fixes multiple errors
     char*   name;
     int     range;
     float   damage;
