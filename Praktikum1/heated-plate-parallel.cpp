@@ -188,24 +188,22 @@ int main(int argc, char *argv[])
   wtime = omp_get_wtime();
   diff = epsilon;
 
-#pragma parallel
   while (epsilon <= diff) {
-    //
-    //  Save the old solution in U.
-    //
-    //#pragma omp parallel for
+//
+//  Save the old solution in U.
+//
+#pragma omp parallel for collapse(2)
     for (i = 0; i < M; i++) {
       for (j = 0; j < N; j++) {
-        //#pragma omp atomic write
         u[i][j] = w[i][j];
       }
     }
-    //
-    //  Determine the new estimate of the solution at the interior points.
-    //  The new solution W is the average of north, south, east and west
-    //  neighbors.
-    //
-    //#pragma omp parallel for collapse(2)
+//
+//  Determine the new estimate of the solution at the interior points.
+//  The new solution W is the average of north, south, east and west
+//  neighbors.
+//
+#pragma omp parallel for collapse(2)
     for (i = 1; i < M - 1; i++) {
       for (j = 1; j < N - 1; j++) {
         w[i][j] = (u[i - 1][j] + u[i + 1][j] + u[i][j - 1] + u[i][j + 1]) / 4.0;
@@ -215,6 +213,7 @@ int main(int argc, char *argv[])
     //  This initialization must be executed by one thread only
     diff = 0.0;
 
+#pragma omp parallel for collapse(2)
     for (i = 1; i < M - 1; i++) {
       for (j = 1; j < N - 1; j++) {
         if (diff < fabs(w[i][j] - u[i][j])) {
