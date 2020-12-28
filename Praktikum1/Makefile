@@ -2,7 +2,7 @@ CC=gcc
 CXX=g++
 CFLAGS=-O2 -fopenmp -std=c99
 CXXFLAGS=-O2 -fopenmp
-EXECS= hello-openmp dotproduct quickSortSequential quickSortParallel heated-plate-parallel
+EXECS= hello-openmp dotproduct matMul heated-plate-parallel
 
 all: $(EXECS)
 
@@ -12,11 +12,8 @@ hello-openmp: hello-openmp.c
 dotproduct: dotproduct.c  
 	$(CC) -o $@ $< $(CFLAGS) -lm
 
-quickSortSequential: quickSortSequential.c  
-	$(CC) -o $@ $< $(CFLAGS)
-
-quickSortParallel: quickSortParallel.c  
-	$(CC) -o $@ $< $(CFLAGS)
+matMul: matMul.c  
+	$(CC) -o $@ $< $(CFLAGS) -lm
 
 heated-plate-parallel: heated-plate-parallel.cpp  
 	$(CXX) -o $@ $< $(CXXFLAGS)
