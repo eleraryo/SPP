@@ -1,0 +1,40 @@
+Shell debugging temporarily silenced: export LMOD_SH_DBG_ON=1 for this output (/opt/lmod/8.1.10/init/bash)
+Shell debugging restarted
+
+  Sequential      1000    1.000000e+03     0.0000145240
+  Parallel        1000    1.000000e+03     0.0000661710  threads        1
+  Parallel        1000    1.000000e+03     0.0001373480  threads        2
+  Parallel        1000    1.000000e+03     0.0001910990  threads        4
+  Parallel        1000    1.000000e+03     0.0001981410  threads        8
+  Parallel        1000    1.000000e+03     0.0002309000  threads       16
+
+  Sequential     10000    1.000000e+04     0.0000191280
+  Parallel       10000    1.000000e+04     0.0000226480  threads        1
+  Parallel       10000    1.000000e+04     0.0000273960  threads        2
+  Parallel       10000    1.000000e+04     0.0003286720  threads        4
+  Parallel       10000    1.000000e+04     0.0001603190  threads        8
+  Parallel       10000    1.000000e+04     0.0001282510  threads       16
+
+  Sequential    100000    1.000000e+05     0.0001988710
+  Parallel      100000    1.000000e+05     0.0001934560  threads        1
+  Parallel      100000    1.000000e+05     0.0002446170  threads        2
+  Parallel      100000    1.000000e+05     0.0001602480  threads        4
+  Parallel      100000    1.000000e+05     0.0001656810  threads        8
+  Parallel      100000    1.000000e+05     0.0002108910  threads       16
+
+  Sequential   1000000    1.000000e+06     0.0009928840
+  Parallel     1000000    1.000000e+06     0.0009494740  threads        1
+  Parallel     1000000    1.000000e+06     0.0010139560  threads        2
+  Parallel     1000000    1.000000e+06     0.0005876160  threads        4
+  Parallel     1000000    1.000000e+06     0.0003811760  threads        8
+  Parallel     1000000    1.000000e+06     0.0003835690  threads       16
+
+  Sequential  10000000    1.000000e+07     0.0123552500
+  Parallel    10000000    1.000000e+07     0.0122590400  threads        1
+  Parallel    10000000    1.000000e+07     0.0083849640  threads        2
+  Parallel    10000000    1.000000e+07     0.0051476630  threads        4
+  Parallel    10000000    1.000000e+07     0.0048374750  threads        8
+  Parallel    10000000    1.000000e+07     0.0052699860  threads       16
+
+DOT_PRODUCT
+  Normal end of execution.
