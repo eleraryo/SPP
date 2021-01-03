@@ -10,7 +10,9 @@ int main(int argc, char *argv[]) {
 
   srand(time(0));
 
-  omp_set_num_threads(rand() % n);
+  int thread_num = rand() % n;
+  omp_set_num_threads(thread_num);
+  printf("Number of threads set to %d\n", thread_num);
 
 #pragma omp parallel
   printf("Hello %d\n", omp_get_thread_num());
