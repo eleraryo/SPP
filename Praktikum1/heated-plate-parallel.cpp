@@ -9,8 +9,6 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
-
 //
 //  Purpose:
 //
@@ -102,10 +100,11 @@ int main(int argc, char *argv[])
 //
 //    Local, double W[M][N], the solution computed at the latest iteration.
 //
-{
+int call_w_threads(int threads) {
 #define M 500
 #define N 500
 
+  omp_set_num_threads(threads);
   double diff;
   double epsilon = 0.001;
   int i;
@@ -117,18 +116,8 @@ int main(int argc, char *argv[])
   double w[M][N];
   double wtime;
 
-  cout << "\n";
-  cout << "HEATED_PLATE_OPENMP\n";
-  cout << "  C++/OpenMP version\n";
-  cout
-      << "  A program to solve for the steady state temperature distribution\n";
-  cout << "  over a rectangular plate.\n";
-  cout << "\n";
   cout << "  Spatial grid of " << M << " by " << N << " points.\n";
   cout << "  The iteration will be repeated until the change is <= " << epsilon
-       << "\n";
-  cout << "  Number of processors available = " << omp_get_num_procs() << "\n";
-  cout << "  Number of threads =              " << omp_get_max_threads()
        << "\n";
   //
   //  Set the boundary values, which don't change.
@@ -170,7 +159,7 @@ int main(int argc, char *argv[])
   //
   //  Initialize the interior solution to the mean value.
   //
-  //#pragma omp parallel for shared(w)
+  //#pragma omp parallel for shared(w) collapse(2)
   for (i = 1; i < M - 1; i++) {
     for (j = 1; j < N - 1; j++) {
       w[i][j] = mean;
@@ -235,15 +224,39 @@ int main(int argc, char *argv[])
   cout << "\n";
   cout << "  Error tolerance achieved.\n";
   cout << "  Wallclock time = " << wtime << "\n";
+
+  return 0;
+#undef M
+#undef N
+}
+
+int main(int argc, char *argv[]) {
+  cout << "\n";
+  cout << "HEATED_PLATE_OPENMP\n";
+  cout << "  C++/OpenMP version\n";
+  cout
+      << "  A program to solve for the steady state temperature distribution\n";
+  cout << "  over a rectangular plate.\n";
+  cout << "\n";
+  cout << "  Number of processors available = " << omp_get_num_procs() << "\n";
+  cout << "  Number of threads =              " << omp_get_max_threads()
+       << "\n";
+  // call iteratively up until the first argument given on execution
+  if (argc > 1) {
+    for (int i = 1; i <= int(argv[1][0]); i *= 2) {
+      cout << "calling the function with " << i << " thread(s)" << endl;
+      call_w_threads(i);
+    }
+  } else {
+    cout << "calling the function with " << omp_get_max_threads()
+         << " thread(s)" << endl;
+    call_w_threads(omp_get_max_threads());
+  }
   //
   //  Terminate.
   //
   cout << "\n";
   cout << "HEATED_PLATE_OPENMP:\n";
   cout << "  Normal end of execution.\n";
-
   return 0;
-
-#undef M
-#undef N
 }
