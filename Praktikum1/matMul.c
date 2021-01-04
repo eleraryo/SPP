@@ -5,8 +5,8 @@
 
 // create three different sized matrices
 #define N 500
-#define M 400
-#define P 300
+#define M 550
+#define P 530
 
 /******************************************************************************/
 
