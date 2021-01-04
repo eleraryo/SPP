@@ -3,37 +3,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int main(int argc, char *argv[]);
+int main();
 double test01(int n, double x[], double y[]);
 double test02(int n, double x[], double y[], int threads);
 
 /******************************************************************************/
 
-int main(int argc, char *argv[]) {
-  double factor;
-  int i;
+int main() {
   int n;
-  double wtime;
-  double *x;
-  double xdoty;
-  double *y;
 
   n = 100;
 
   while (n < 10000000) {
     n = n * 10;
 
-    x = (double *)malloc(n * sizeof(double));
-    y = (double *)malloc(n * sizeof(double));
+    double *x = (double *)malloc(n * sizeof(double));
+    double *y = (double *)malloc(n * sizeof(double));
 
-    factor = (double)(n);
+    double factor = (double)(n);
     factor = 1.0 / sqrt(2.0 * factor * factor + 3 * factor + 1.0);
 
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
       x[i] = (i + 1) * factor;
     }
 
-    for (i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++) {
       y[i] = (i + 1) * 6 * factor;
     }
 
@@ -42,9 +36,9 @@ int main(int argc, char *argv[]) {
       Test #1
     */
     double start = omp_get_wtime();
-    xdoty = test01(n, x, y);
+    double xdoty = test01(n, x, y);
     double end = omp_get_wtime();
-    wtime = end - start;
+    double wtime = end - start;
 
     printf("  Sequential  %8d  %14.6e  %15.10f\n", n, xdoty, wtime);
     /*
@@ -76,7 +70,6 @@ int main(int argc, char *argv[]) {
 double test01(int n, double x[], double y[])
 
 {
-  int i;
   double xdoty;
 
   xdoty = 0.0;
@@ -92,7 +85,6 @@ double test01(int n, double x[], double y[])
 double test02(int n, double x[], double y[], int threads)
 
 {
-  int i;
   double xdoty;
 
   xdoty = 0.0;
