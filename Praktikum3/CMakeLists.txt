@@ -1,13 +1,14 @@
 # Minimum version of CMake required to build this project
-cmake_minimum_required(VERSION 3.8.2)
-enable_language(CUDA)
-
+cmake_minimum_required(VERSION 3.17)
 # Name of the project
 project(Praktikum3)
+enable_language(CUDA)
+
+find_package(CUDAToolkit)
 
 # Add all the source files needed to build the executable
 add_executable(
-  biliteral
+  bilateral
   main.cpp
   serial.cpp
   kernel.cu
@@ -16,8 +17,10 @@ add_executable(
 )
 
 # specify the C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-set_property(TARGET biliteral PROPERTY CUDA_STANDARD 11)
-set_property(TARGET biliteral PROPERTY CUDA_ARCHITECTURES 52)
+set_property(TARGET bilateral PROPERTY CUDA_STANDARD 11)
+set_property(TARGET bilateral PROPERTY CUDA_ARCHITECTURES 52)
+
+target_link_libraries(bilateral PRIVATE CUDA::cudart)

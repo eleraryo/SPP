@@ -49,7 +49,7 @@ void cuda_updateGaussian(int r, double sd) {
     fGaussian[i] = expf(-(x * x) / (2 * sd * sd));
   }
   // TODO: Copy computed fGaussian to the cGaussian on device memory
-  cudaMemcpyToSymbol(cGaussian, /* TODO */);
+  // cudaMemcpyToSymbol(cGaussian, /* TODO */);
 }
 
 // TODO: implement cuda_gaussian() kernel
@@ -111,7 +111,8 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // Calculate and print kernel run time
   cudaEventElapsedTime(&time, start, stop);
   cout << "GPU Grayscaling time: " << time << " (ms)\n";
-  cout << "Launched blocks of size " << gray_block.x * gray_block.y << endl;
+  // TODO back in: cout << "Launched blocks of size " << gray_block.x *
+  // gray_block.y << endl;
 
   // TODO: transfer image from device to the main memory for saving onto the
   // disk
@@ -138,8 +139,8 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // Calculate and print kernel run time
   cudaEventElapsedTime(&time, start, stop);
   cout << "GPU Bilateral Filter time: " << time << " (ms)\n";
-  cout << "Launched blocks of size " << bilateral_block.x * bilateral_block.y
-       << endl;
+  // TODO back in: cout << "Launched blocks of size " << bilateral_block.x *
+  // bilateral_block.y << endl;
 
   // Copy output from device to host
   // TODO: transfer image from device to the main memory for saving onto the
