@@ -95,7 +95,7 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
     // TODO: allocate memory on the device
     cudaMalloc(&d_input, image_size);
     // TODO: intialize allocated memory on device to zero
-    cudaMemcpy(&d_input, input, image_size, cudaMemcpyHostToDevice);
+    cudaMemcpy(&d_input, &input, image_size, cudaMemcpyHostToDevice);
   }
 
   // copy input image to device
