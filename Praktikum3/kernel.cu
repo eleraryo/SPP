@@ -26,10 +26,16 @@ __global__ void cuda_grayscale(int width, int height, BYTE *image,
   if (w >= width || h >= height)
     return;
   // printf("trying to write pixel %d, %d\n", w, h);
-  BYTE *pixel = &image[w * h + w];
-  image_out[w * h + w] = pixel[0] * 0.2126f + // R
-                         pixel[1] * 0.7152f + // G
-                         pixel[2] * 0.0722f;  // B
+  // TODO something is off with position
+  int position = h * width + w;
+  BYTE *pixel = &image[position];
+  // TODO fix only reading 0 as pixel values
+  // printf("pixel values are %u, %u, %u\n", pixel[0], pixel[1], pixel[2]);
+  image_out[position] = pixel[0] * 0.2126f + // R
+                        pixel[1] * 0.7152f + // G
+                        pixel[2] * 0.0722f;  // B
+  // image_out[position] = 254;
+  // printf("new pixel value is %u @ %d \n", image_out[position], position);
   return;
 }
 
@@ -127,16 +133,23 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   //   // DONE: intialize allocated memory on device to zero
   //   cudaMemset(&d_image_out, 0, image_size * sizeof(BYTE *));
   // }
-  cudaMalloc(&d_image_out, image_size * sizeof(BYTE *));
+  auto out = cudaMalloc(&d_image_out, image_size * sizeof(BYTE));
+  cout << cudaGetErrorName(out) << " malloc did this " << endl;
   // DONE: intialize allocated memory on device to zero
-  cudaMemset(&d_image_out, 0, image_size * sizeof(BYTE *));
+  auto memset_err = cudaMemset(d_image_out, 0, image_size * sizeof(BYTE));
+  cout << cudaGetErrorName(memset_err) << " memset did this " << endl;
+  // cudaMemcpy(&d_image_out, &output.pixels, image_size * sizeof(BYTE),
+  //            cudaMemcpyHostToDevice);
 
   // copy input image to device
   // DONE: Allocate memory on device for input image
-  cudaMalloc(&d_input, image_size * sizeof(BYTE *));
+  auto out2 = cudaMalloc(&d_input, image_size * sizeof(BYTE));
+  cout << cudaGetErrorName(out2) << " malloc did this " << endl;
   // DONE: Copy input image into the device memory
-  cudaMemcpy(&d_input, &input.pixels, image_size * sizeof(BYTE *),
-             cudaMemcpyHostToDevice);
+  auto memcpy_err = cudaMemcpy(d_input, input.pixels, image_size * sizeof(BYTE),
+                               cudaMemcpyHostToDevice);
+  cout << cudaGetErrorName(memcpy_err) << " memcopy to device did this "
+       << endl;
 
   cudaEventRecord(start, 0); // start timer
   // Convert input image to grayscale
@@ -160,8 +173,10 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
 
   // DONE: transfer image from device to the main memory for saving onto the
   // disk
-  cudaMemcpy(&output.pixels, &d_image_out, image_size * sizeof(BYTE *),
-             cudaMemcpyDeviceToHost);
+  auto memcpy_err2 =
+      cudaMemcpy(output.pixels, d_image_out, image_size * sizeof(BYTE),
+                 cudaMemcpyDeviceToHost);
+  cout << cudaGetErrorName(memcpy_err2) << " memcopy to host did this " << endl;
   savePPM(output, "image_gpu_gray.ppm");
 
   // ******* Bilateral filter kernel launch *************
