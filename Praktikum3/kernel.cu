@@ -19,28 +19,32 @@ using namespace std;
 __global__ void cuda_grayscale(int width, int height, BYTE *image,
                                BYTE *image_out) {
   // TODO: implement grayscale filter kernel
+  // iterate over Matrix style element
+  int w = blockIdx.x * blockDim.x + threadIdx.x;
+  int h = blockIdx.y * blockDim.y + threadIdx.y;
+  // int w = threadIdx.x;
+  // int h = threadIdx.y;
 
-  // TODO this to cudo
-  // =================================
-  // for (int h = 0; h < height; ++h) {
-  //   int offset_out = h * width;      // 1 color per pixel
-  //   int offset     = offset_out * 3; // 3 colors per pixel
-
-  //   for (int w = 0; w < width; ++w) {
-  //     BYTE *pixel = &image[offset + w * 3];
-  //     // Convert to grayscale following the "luminance" model
-  //     image_out[offset_out + w] =
-  //       pixel[0] * 0.2126f + // R
-  //       pixel[1] * 0.7152f + // G
-  //       pixel[2] * 0.0722f;  // B
-  //   }
-  // }
-  // =================================
+  if (w < width && h < height) {
+    printf("trying to write pixel %d, %d\n", w, h);
+    // BYTE *pixel = &image[w];
+    image_out[w * h + w] = 254;
+    // int offset_out = h * width;  // 1 color per pixel
+    // int offset = offset_out * 3; // 3 colors per pixel
+    // BYTE *pixel = &image[offset + w * 3];
+    // // Convert to grayscale following the "luminance" model
+    // image_out[offset_out + w] = pixel[0] * 0.2126f + // R
+    //                             pixel[1] * 0.7152f + // G
+    //                             pixel[2] * 0.0722f;  // B
+    return;
+  } else
+    return;
 }
 
 // 1D Gaussian kernel array values of a fixed size (make sure the number >
 // filter size d)
-// TODO: Define the cGaussian array on the constant memory
+// DONE: Define the cGaussian array on the constant memory
+__constant__ float cGaussian[64];
 
 void cuda_updateGaussian(int r, double sd) {
   float fGaussian[64];
@@ -48,8 +52,8 @@ void cuda_updateGaussian(int r, double sd) {
     float x = i - r;
     fGaussian[i] = expf(-(x * x) / (2 * sd * sd));
   }
-  // TODO: Copy computed fGaussian to the cGaussian on device memory
-  // cudaMemcpyToSymbol(cGaussian, /* TODO */);
+  // DONE: Copy computed fGaussian to the cGaussian on device memory
+  cudaMemcpyToSymbol(cGaussian, fGaussian, sizeof(float) * (2 * r + 1));
 }
 
 // TODO: implement cuda_gaussian() kernel
@@ -59,6 +63,34 @@ void cuda_updateGaussian(int r, double sd) {
 __global__ void cuda_bilateral_filter(BYTE *input, BYTE *output, int width,
                                       int height, int r, double sI, double sS) {
   // TODO: implement bilateral filter kernel
+  //
+  // __global__ void d_bilateral_filter(uint * od, int w, int h, float e_d, int
+  // r,
+  //                                    cudaTextureObject_t rgbaTex) {
+  int x = blockIdx.x * blockDim.x + threadIdx.x;
+  int y = blockIdx.y * blockDim.y + threadIdx.y;
+
+  // if (x >= w || y >= h) {
+  //   return;
+  // }
+
+  // float sum = 0.0f;
+  // float factor;
+  // float4 t = {0.f, 0.f, 0.f, 0.f};
+  // float4 center = tex2D<float4>(rgbaTex, x, y);
+
+  // for (int i = -r; i <= r; i++) {
+  //   for (int j = -r; j <= r; j++) {
+  //     float4 curPix = tex2D<float4>(rgbaTex, x + j, y + i);
+  //     factor = cGaussian[i + r] * cGaussian[j + r] * // domain factor
+  //              euclideanLen(curPix, center, e_d);    // range factor
+
+  //     t += factor * curPix;
+  //     sum += factor;
+  //   }
+  // }
+
+  // od[y * w + x] = rgbaFloatToInt(t / sum);
 }
 
 void gpu_pipeline(const Image &input, Image &output, int r, double sI,
@@ -71,7 +103,9 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
 
   // GPU related variables
   BYTE *d_input = NULL;
-  BYTE *d_image_out[2] = {0}; // temporary output buffers on gpu device
+  // BYTE *d_image_out[2] = {0}; // temporary output buffers on gpu device //
+  // TODO check why this was {0} instead of NULL
+  BYTE *d_image_out = NULL; // temporary output buffers on gpu device
   int image_size = input.cols * input.rows;
   int suggested_blockSize;   // The launch configurator returned block size
   int suggested_minGridSize; // The minimum grid size needed to achieve the
@@ -83,28 +117,48 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   cudaOccupancyMaxPotentialBlockSize(&suggested_minGridSize,
                                      &suggested_blockSize, cuda_grayscale);
 
-  int block_dim_x, block_dim_y;
+  int block_dim_x = sqrt(suggested_blockSize);
+  int block_dim_y = sqrt(suggested_blockSize);
+  cout << "suggested gridsize:" << suggested_minGridSize
+       << "and suggested blocksize: " << suggested_blockSize << endl;
+  cout << "chosen block_dim " << block_dim_x << endl;
 
-  dim3 gray_block(/* TODO */);
+  // dim3 gray_block((suggested_minGridSize + block_dim_x - 1) / block_dim_x,
+  //                 (suggested_minGridSize + block_dim_y - 1) / block_dim_y);
+  // dim3 gray_block(block_dim_x, block_dim_y);
+  dim3 gray_block(32, 32);
 
-  // TODO: Calculate grid size to cover the whole image
+  // DONE: Calculate grid size to cover the whole image
+  // dim3 gridSize((input.cols + block_dim_x - 1) / block_dim_x,
+  //               (input.rows + block_dim_y - 1) / block_dim_y);
+  dim3 gridSize(suggested_minGridSize);
 
   // Allocate the intermediate image buffers for each step
   Image img_out(input.cols, input.rows, 1, "P5");
   for (int i = 0; i < 2; i++) {
-    // TODO: allocate memory on the device
-    cudaMalloc(&d_input, image_size);
-    // TODO: intialize allocated memory on device to zero
-    cudaMemcpy(&d_input, &input, image_size, cudaMemcpyHostToDevice);
+    // DONE: allocate memory on the device
+    cudaMalloc(&d_image_out, image_size);
+    // DONE: intialize allocated memory on device to zero
+    cudaMemset(&d_image_out, 0, image_size);
   }
 
   // copy input image to device
-  // TODO: Allocate memory on device for input image
-  // TODO: Copy input image into the device memory
+  // DONE: Allocate memory on device for input image
+  cudaMalloc(&d_input, image_size);
+  // DONE: Copy input image into the device memory
+  cudaMemcpy(&d_input, &input, image_size, cudaMemcpyHostToDevice);
 
   cudaEventRecord(start, 0); // start timer
   // Convert input image to grayscale
-  // TODO: Launch cuda_grayscale()
+
+  // DONE: Launch cuda_grayscale()
+  printf(
+      "call cuda_greyscale with gridsize: {%d, %d} and blocksize: {%d, %d} \n",
+      gridSize, gray_block);
+  cuda_grayscale<<<gridSize, gray_block>>>(input.cols, input.rows, &d_input,
+                                           &d_image_out);
+  printf("finished cuda_greyscale\n");
+
   cudaEventRecord(stop, 0); // stop timer
   cudaEventSynchronize(stop);
 
@@ -114,8 +168,9 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // TODO back in: cout << "Launched blocks of size " << gray_block.x *
   // gray_block.y << endl;
 
-  // TODO: transfer image from device to the main memory for saving onto the
+  // DONE: transfer image from device to the main memory for saving onto the
   // disk
+  cudaMemcpy(&d_image_out, &input, image_size, cudaMemcpyDeviceToHost);
   savePPM(img_out, "image_gpu_gray.ppm");
 
   // ******* Bilateral filter kernel launch *************
@@ -149,5 +204,7 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // ************** Finalization, cleaning up ************
 
   // Free GPU variables
-  // TODO: Free device allocated memory
+  // DONE: Free device allocated memory
+  cudaFree(&d_input);
+  cudaFree(&d_image_out);
 }
