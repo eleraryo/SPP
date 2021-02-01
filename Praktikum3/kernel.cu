@@ -22,23 +22,15 @@ __global__ void cuda_grayscale(int width, int height, BYTE *image,
   // iterate over Matrix style element
   int w = blockIdx.x * blockDim.x + threadIdx.x;
   int h = blockIdx.y * blockDim.y + threadIdx.y;
-  // int w = threadIdx.x;
-  // int h = threadIdx.y;
 
-  if (w < width && h < height) {
-    printf("trying to write pixel %d, %d\n", w, h);
-    // BYTE *pixel = &image[w];
-    image_out[w * h + w] = 254;
-    // int offset_out = h * width;  // 1 color per pixel
-    // int offset = offset_out * 3; // 3 colors per pixel
-    // BYTE *pixel = &image[offset + w * 3];
-    // // Convert to grayscale following the "luminance" model
-    // image_out[offset_out + w] = pixel[0] * 0.2126f + // R
-    //                             pixel[1] * 0.7152f + // G
-    //                             pixel[2] * 0.0722f;  // B
+  if (w >= width || h >= height)
     return;
-  } else
-    return;
+  // printf("trying to write pixel %d, %d\n", w, h);
+  BYTE *pixel = &image[w * h + w];
+  image_out[w * h + w] = pixel[0] * 0.2126f + // R
+                         pixel[1] * 0.7152f + // G
+                         pixel[2] * 0.0722f;  // B
+  return;
 }
 
 // 1D Gaussian kernel array values of a fixed size (make sure the number >
@@ -119,44 +111,42 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
 
   int block_dim_x = sqrt(suggested_blockSize);
   int block_dim_y = sqrt(suggested_blockSize);
-  cout << "suggested gridsize:" << suggested_minGridSize
-       << "and suggested blocksize: " << suggested_blockSize << endl;
-  cout << "chosen block_dim " << block_dim_x << endl;
-
-  // dim3 gray_block((suggested_minGridSize + block_dim_x - 1) / block_dim_x,
-  //                 (suggested_minGridSize + block_dim_y - 1) / block_dim_y);
-  // dim3 gray_block(block_dim_x, block_dim_y);
-  dim3 gray_block(32, 32);
 
   // DONE: Calculate grid size to cover the whole image
-  // dim3 gridSize((input.cols + block_dim_x - 1) / block_dim_x,
-  //               (input.rows + block_dim_y - 1) / block_dim_y);
-  dim3 gridSize(suggested_minGridSize);
+  dim3 threadsPerBlock(block_dim_x, block_dim_y);
+  dim3 numBlocks((input.cols + block_dim_x - 1) / block_dim_x,
+                 (input.rows + block_dim_y - 1) / block_dim_y);
 
   // Allocate the intermediate image buffers for each step
-  Image img_out(input.cols, input.rows, 1, "P5");
-  for (int i = 0; i < 2; i++) {
-    // DONE: allocate memory on the device
-    cudaMalloc(&d_image_out, image_size);
-    // DONE: intialize allocated memory on device to zero
-    cudaMemset(&d_image_out, 0, image_size);
-  }
+  // Image img_out(input.cols, input.rows, 1, "P5");
+  // for (int i = 0; i < 2; i++) {
+  //   // TODO Why do we do this twice but don't use the second one?
+  //   // DONE: allocate memory on the device
+  //   // TODO check if maybe sizeof(Image) or sizeof(input)
+  //   cudaMalloc(&d_image_out, image_size * sizeof(BYTE *));
+  //   // DONE: intialize allocated memory on device to zero
+  //   cudaMemset(&d_image_out, 0, image_size * sizeof(BYTE *));
+  // }
+  cudaMalloc(&d_image_out, image_size * sizeof(BYTE *));
+  // DONE: intialize allocated memory on device to zero
+  cudaMemset(&d_image_out, 0, image_size * sizeof(BYTE *));
 
   // copy input image to device
   // DONE: Allocate memory on device for input image
-  cudaMalloc(&d_input, image_size);
+  cudaMalloc(&d_input, image_size * sizeof(BYTE *));
   // DONE: Copy input image into the device memory
-  cudaMemcpy(&d_input, &input, image_size, cudaMemcpyHostToDevice);
+  cudaMemcpy(&d_input, &input.pixels, image_size * sizeof(BYTE *),
+             cudaMemcpyHostToDevice);
 
   cudaEventRecord(start, 0); // start timer
   // Convert input image to grayscale
 
   // DONE: Launch cuda_grayscale()
-  printf(
-      "call cuda_greyscale with gridsize: {%d, %d} and blocksize: {%d, %d} \n",
-      gridSize, gray_block);
-  cuda_grayscale<<<gridSize, gray_block>>>(input.cols, input.rows, &d_input,
-                                           &d_image_out);
+  printf("call cuda_greyscale with : {%d, %d} threads per block and : {%d, %d} "
+         "number of blocks \n",
+         threadsPerBlock.x, threadsPerBlock.y, numBlocks.x, numBlocks.y);
+  cuda_grayscale<<<threadsPerBlock, numBlocks>>>(input.cols, input.rows,
+                                                 d_input, d_image_out);
   printf("finished cuda_greyscale\n");
 
   cudaEventRecord(stop, 0); // stop timer
@@ -170,8 +160,9 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
 
   // DONE: transfer image from device to the main memory for saving onto the
   // disk
-  cudaMemcpy(&d_image_out, &input, image_size, cudaMemcpyDeviceToHost);
-  savePPM(img_out, "image_gpu_gray.ppm");
+  cudaMemcpy(&output.pixels, &d_image_out, image_size * sizeof(BYTE *),
+             cudaMemcpyDeviceToHost);
+  savePPM(output, "image_gpu_gray.ppm");
 
   // ******* Bilateral filter kernel launch *************
 
