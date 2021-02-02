@@ -10,7 +10,6 @@
 #include <iostream>
 
 using namespace std;
-
 /*********** Gray Scale Filter  *********/
 
 /**
@@ -18,24 +17,17 @@ using namespace std;
  */
 __global__ void cuda_grayscale(int width, int height, BYTE *image,
                                BYTE *image_out) {
-  // TODO: implement grayscale filter kernel
-  // iterate over Matrix style element
+  // DONE: implement grayscale filter kernel
   int w = blockIdx.x * blockDim.x + threadIdx.x;
   int h = blockIdx.y * blockDim.y + threadIdx.y;
 
   if (w >= width || h >= height)
     return;
-  // printf("trying to write pixel %d, %d\n", w, h);
-  // TODO something is off with position
   int position = h * width + w;
   BYTE *pixel = &image[position * 3];
-  // TODO fix only reading 0 as pixel values
-  // printf("pixel values are %u, %u, %u\n", pixel[0], pixel[1], pixel[2]);
   image_out[position] = pixel[0] * 0.2126f + // R
                         pixel[1] * 0.7152f + // G
                         pixel[2] * 0.0722f;  // B
-  // image_out[position] = 254;
-  // printf("new pixel value is %u @ %d \n", image_out[position], position);
   return;
 }
 
@@ -53,7 +45,7 @@ void cuda_updateGaussian(int r, double sd) {
   // DONE: Copy computed fGaussian to the cGaussian on device memory
   auto status =
       cudaMemcpyToSymbol(cGaussian, fGaussian, sizeof(float) * (2 * r + 1));
-  cout << "update gaussian memcpy: " << cudaGetErrorName(status) << endl;
+  // cout << "update gaussian memcpy: " << cudaGetErrorName(status) << endl;
 }
 
 // DONE: implement cuda_gaussian() kernel
@@ -62,21 +54,12 @@ __device__ double cuda_gaussian(float x, double sigma) {
   return expf(-(powf(x, 2)) / (2 * powf(sigma, 2)));
 }
 
-// Euclidean Distance (x, y, d) = exp((|x - y| / d)^2 / 2)
-// __device__ float cuda_gaussian(float4 a, float4 b, float d) {
-//   float mod = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
-
-//   return __expf(-mod / (2.f * d * d));
-// }
-
 /*********** Bilateral Filter  *********/
 // Parallel (GPU) Bilateral filter kernel
 __global__ void cuda_bilateral_filter(BYTE *input, BYTE *output, int width,
                                       int height, int r, double sI, double sS) {
-  // TODO: implement bilateral filter kernel
+  // DONE: implement bilateral filter kernel
   //
-  // __global__ void d_bilateral_filter(uint * od, int w, int h, float e_d,
-  // int r,cudaTextureObject_t rgbaTex) {
   int x = blockIdx.x * blockDim.x + threadIdx.x;
   int y = blockIdx.y * blockDim.y + threadIdx.y;
 
@@ -108,25 +91,6 @@ __global__ void cuda_bilateral_filter(BYTE *input, BYTE *output, int width,
     }
   }
   output[y * width + x] = iFiltered / wP;
-
-  // float sum = 0.0f;
-  // float factor;
-  // float4 t = {0.f, 0.f, 0.f, 0.f};
-  // float4 center = tex2D<float4>(rgbaTex, x, y);
-  // int curPix = y * height + x;
-
-  // for (int i = -r; i <= r; i++) {
-  //   for (int j = -r; j <= r; j++) {
-  //     //     float4 curPix = tex2D<float4>(rgbaTex, x + j, y + i);
-  //     factor = cGaussian[i + r] * cGaussian[j + r] * // domain factor
-  //              cuda_gaussian(curPix, center, sI);    // range factor
-
-  //     t += factor * curPix;
-  //     sum += factor;
-  //   }
-  // }
-
-  // od[y * w + x] = rgbaFloatToInt(t / sum);
 }
 
 void gpu_pipeline(const Image &input, Image &output, int r, double sI,
@@ -161,23 +125,23 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
                  (input.rows + block_dim_y - 1) / block_dim_y);
 
   auto out = cudaMalloc(&d_image_out, image_size * sizeof(BYTE));
-  cout << cudaGetErrorName(out) << " malloc did this " << endl;
+  // cout << cudaGetErrorName(out) << " malloc did this " << endl;
   // DONE: intialize allocated memory on device to zero
   auto memset_err = cudaMemset(d_image_out, 0, image_size * sizeof(BYTE));
-  cout << cudaGetErrorName(memset_err) << " memset did this " << endl;
+  // cout << cudaGetErrorName(memset_err) << " memset did this " << endl;
   // cudaMemcpy(&d_image_out, &output.pixels, image_size * sizeof(BYTE),
   //            cudaMemcpyHostToDevice);
 
   // copy input image to device
   // DONE: Allocate memory on device for input image
   auto out2 = cudaMalloc(&d_input, image_size * 3 * sizeof(BYTE));
-  cout << cudaGetErrorName(out2) << " malloc did this " << endl;
+  // cout << cudaGetErrorName(out2) << " malloc did this " << endl;
   // DONE: Copy input image into the device memory
   auto memcpy_err =
       cudaMemcpy(d_input, input.pixels, image_size * 3 * sizeof(BYTE),
                  cudaMemcpyHostToDevice);
-  cout << cudaGetErrorName(memcpy_err) << " memcopy to device did this "
-       << endl;
+  // cout << cudaGetErrorName(memcpy_err) << " memcopy to device did this "
+  //      << endl;
 
   cudaEventRecord(start, 0); // start timer
   // Convert input image to grayscale
@@ -189,7 +153,6 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
          threadsPerBlock.x, threadsPerBlock.y, numBlocks.x, numBlocks.y);
   cuda_grayscale<<<threadsPerBlock, numBlocks>>>(input.cols, input.rows,
                                                  d_input, d_image_out);
-  printf("finished cuda_greyscale\n");
 
   cudaEventRecord(stop, 0); // stop timer
   cudaEventSynchronize(stop);
@@ -197,15 +160,14 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // Calculate and print kernel run time
   cudaEventElapsedTime(&time, start, stop);
   cout << "GPU Grayscaling time: " << time << " (ms)\n";
-  // TODO back in: cout << "Launched blocks of size " << gray_block.x *
-  // gray_block.y << endl;
 
   // DONE: transfer image from device to the main memory for saving onto
   // the disk
   auto memcpy_err2 =
       cudaMemcpy(output.pixels, d_image_out, image_size * sizeof(BYTE),
                  cudaMemcpyDeviceToHost);
-  cout << cudaGetErrorName(memcpy_err2) << " memcopy to host did this " << endl;
+  // cout << cudaGetErrorName(memcpy_err2) << " memcopy to host did this " <<
+  // endl;
   savePPM(output, "image_gpu_gray.ppm");
 
   // ******* Bilateral filter kernel launch *************
@@ -214,14 +176,12 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   cudaOccupancyMaxPotentialBlockSize(
       &suggested_minGridSize, &suggested_blockSize, cuda_bilateral_filter);
 
-  // dim3 bilateral_block(/* TODO */);
-
   block_dim_x = sqrt(suggested_blockSize);
   block_dim_y = sqrt(suggested_blockSize);
 
   // DONE: Calculate grid size to cover the whole image
   dim3 threadsPerBlockBiliteral(block_dim_x,
-                                block_dim_y); // this was grey_block
+                                block_dim_y); // this was biliteral_block
   // DONE: Calculate grid size to cover the whole image
   dim3 numBlocksBiliteral((input.cols + block_dim_x - 1) / block_dim_x,
                           (input.rows + block_dim_y - 1) / block_dim_y);
@@ -232,10 +192,11 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   BYTE *d_bil_image_out = NULL; // temporary output buffers on gpu device
   // create zeroes image output for biliteral
   out = cudaMalloc(&d_bil_image_out, image_size * sizeof(BYTE));
-  cout << cudaGetErrorName(out) << " malloc biliteral did this " << endl;
+  // cout << cudaGetErrorName(out) << " malloc biliteral did this " << endl;
   // DONE: intialize allocated memory on device to zero
   memset_err = cudaMemset(d_bil_image_out, 0, image_size * sizeof(BYTE));
-  cout << cudaGetErrorName(memset_err) << " memset biliteral did this " << endl;
+  // cout << cudaGetErrorName(memset_err) << " memset biliteral did this " <<
+  // endl;
 
   cudaEventRecord(start, 0); // start timer
   // DONE: Launch cuda_bilateral_filter()
@@ -247,26 +208,24 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // Calculate and print kernel run time
   cudaEventElapsedTime(&time, start, stop);
   cout << "GPU Bilateral Filter time: " << time << " (ms)\n";
-  // TODO back in: cout << "Launched blocks of size " << bilateral_block.x
-  // * bilateral_block.y << endl;
 
   // Copy output from device to host
-  // TODO: transfer image from device to the main memory for saving onto
+  // DONE: transfer image from device to the main memory for saving onto
   // the disk
 
   out = cudaMemcpy(output.pixels, d_bil_image_out, image_size * sizeof(BYTE),
                    cudaMemcpyDeviceToHost);
-  cout << cudaGetErrorName(out) << " memcopy biliteral to host did this "
-       << endl;
+  // cout << cudaGetErrorName(out) << " memcopy biliteral to host did this "
+  //      << endl;
   savePPM(output, "image_bil_gpu_gray.ppm");
   // ************** Finalization, cleaning up ************
 
   // Free GPU variables
   // DONE: Free device allocated memory
   out = cudaFree(d_input);
-  cout << cudaGetErrorName(out) << " free d_input did this " << endl;
+  // cout << cudaGetErrorName(out) << " free d_input did this " << endl;
   out = cudaFree(d_image_out);
-  cout << cudaGetErrorName(out) << " free d_image_out did this " << endl;
+  // cout << cudaGetErrorName(out) << " free d_image_out did this " << endl;
   out = cudaFree(d_bil_image_out);
-  cout << cudaGetErrorName(out) << " free d_bil_image_out did this " << endl;
+  // cout << cudaGetErrorName(out) << " free d_bil_image_out did this " << endl;
 }
