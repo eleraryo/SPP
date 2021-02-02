@@ -28,7 +28,7 @@ __global__ void cuda_grayscale(int width, int height, BYTE *image,
   // printf("trying to write pixel %d, %d\n", w, h);
   // TODO something is off with position
   int position = h * width + w;
-  BYTE *pixel = &image[position];
+  BYTE *pixel = &image[position * 3];
   // TODO fix only reading 0 as pixel values
   // printf("pixel values are %u, %u, %u\n", pixel[0], pixel[1], pixel[2]);
   image_out[position] = pixel[0] * 0.2126f + // R
@@ -119,7 +119,7 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   int block_dim_y = sqrt(suggested_blockSize);
 
   // DONE: Calculate grid size to cover the whole image
-  dim3 threadsPerBlock(block_dim_x, block_dim_y);
+  dim3 threadsPerBlock(block_dim_x, block_dim_y); // this was grey_block
   dim3 numBlocks((input.cols + block_dim_x - 1) / block_dim_x,
                  (input.rows + block_dim_y - 1) / block_dim_y);
 
@@ -128,7 +128,6 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
   // for (int i = 0; i < 2; i++) {
   //   // TODO Why do we do this twice but don't use the second one?
   //   // DONE: allocate memory on the device
-  //   // TODO check if maybe sizeof(Image) or sizeof(input)
   //   cudaMalloc(&d_image_out, image_size * sizeof(BYTE *));
   //   // DONE: intialize allocated memory on device to zero
   //   cudaMemset(&d_image_out, 0, image_size * sizeof(BYTE *));
@@ -143,11 +142,12 @@ void gpu_pipeline(const Image &input, Image &output, int r, double sI,
 
   // copy input image to device
   // DONE: Allocate memory on device for input image
-  auto out2 = cudaMalloc(&d_input, image_size * sizeof(BYTE));
+  auto out2 = cudaMalloc(&d_input, image_size * 3 * sizeof(BYTE));
   cout << cudaGetErrorName(out2) << " malloc did this " << endl;
   // DONE: Copy input image into the device memory
-  auto memcpy_err = cudaMemcpy(d_input, input.pixels, image_size * sizeof(BYTE),
-                               cudaMemcpyHostToDevice);
+  auto memcpy_err =
+      cudaMemcpy(d_input, input.pixels, image_size * 3 * sizeof(BYTE),
+                 cudaMemcpyHostToDevice);
   cout << cudaGetErrorName(memcpy_err) << " memcopy to device did this "
        << endl;
 
